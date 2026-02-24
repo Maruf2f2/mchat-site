@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-CHAT INFO | Message Transporting</title>
+    <style>
+
+        footer {
+    position: fixed;
+    bottom: 0;
+    left: var(--sidebar-width);
+    right: 0;
+    background: var(--bg-content);
+    border-top: 1px solid var(--border);
+    text-align: center;
+    padding: 15px;
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+@media (max-width: 900px) {
+    footer {
+        left: 0;
+    }
+}
+
+        :root {
+            --bg-main: #050505;
+            --bg-content: #0a0a0c;
+            --wiki-blue: #00d2ff;
+            --wiki-purple: #9d50bb;
+            --wiki-green: #00ff41;
+            --border: #222;
+            --text-main: #d1d1d1;
+            --text-dim: #555;
+            --sidebar-width: 220px;
+        }
+
+        * { box-sizing: border-box; scroll-behavior: smooth; }
+        
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        #matrix { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.1; }
+
+        .status-header {
+            position: fixed; top: 0; left: var(--sidebar-width); right: 0;
+            height: 50px; background: rgba(10, 10, 12, 0.95);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 30px;
+            z-index: 1000; backdrop-filter: blur(15px); gap: 20px;
+        }
+        .paper-ship {
+            width: 28px; height: 28px;
+            fill: var(--wiki-blue);
+            filter: drop-shadow(0 0 5px var(--wiki-blue));
+        }
+
+        .status-item { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--wiki-green); box-shadow: 0 0 10px var(--wiki-green); animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        #mw-panel {
+            width: var(--sidebar-width); padding: 30px 15px; position: sticky; top: 0; height: 100vh;
+            border-right: 1px solid var(--border); background: var(--bg-main); overflow-y: auto; font-size: 13px;
+        }
+        .wiki-logo-container { text-align: center; margin-bottom: 40px; }
+        .wiki-logo-main { font-size: 24px; font-weight: 900; color: var(--wiki-blue); letter-spacing: 1px; display: block; }
+
+        .portal-group { margin-bottom: 25px; }
+        .portal-group h3 { font-size: 10px; color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid #1a1a1a; padding-bottom: 5px; margin-bottom: 10px; }
+        .portal-group ul { list-style: none; padding: 0; margin: 0; }
+        .portal-group li { margin-bottom: 10px; }
+        .portal-group a { color: #4ebaff; text-decoration: none; transition: 0.2s; font-size: 14px; }
+        .portal-group a:hover { color: #fff; text-decoration: underline; }
+
+        #content { flex: 1; background-color: var(--bg-content); padding: 90px 60px 150px 60px; max-width: 1300px; position: relative; }
+        h1#firstHeading { font-size: 42px; font-family: serif; border-bottom: 1px solid var(--border); margin: 0 0 10px 0; padding-bottom: 10px; color: #fff; font-weight: normal; }
+        .tagline { font-size: 12px; color: var(--text-dim); margin-bottom: 40px; }
+
+        #hacker-window {
+            position: absolute; top: 90px; right: 60px;
+            width: 250px; height: 250px; background: #000;
+            border: 1px solid var(--wiki-green); padding: 10px;
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--wiki-green);
+            overflow: hidden; box-shadow: 0 0 20px rgba(0, 255, 65, 0.2); line-height: 1.1;
+            z-index: 10; transition: opacity 0.5s ease;
+        }
+
+        .infobox-wiki {
+            float: right; clear: right; width: 320px; background: #111;
+            border: 1px solid var(--border); margin: 280px 0 25px 25px; padding: 10px; font-size: 13px;
+        }
+        .infobox-wiki-header { background: #1a1a20; text-align: center; font-weight: bold; padding: 12px; color: var(--wiki-blue); font-size: 16px; }
+        .infobox-wiki-img { display: flex; width: 100%; height: 150px; background: #050505; margin: 10px 0; align-items: center; justify-content: center; color: var(--wiki-blue); font-weight: 900; font-size: 30px; }
+        .infobox-wiki table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .infobox-wiki th { text-align: left; padding: 8px; color: #888; border-bottom: 1px solid #222; }
+        .infobox-wiki td { padding: 8px; border-bottom: 1px solid #222; }
+
+        h2 { border-bottom: 1px solid var(--border); margin-top: 70px; font-size: 28px; font-weight: 400; color: var(--wiki-blue); padding-bottom: 5px; clear: left; }
+        p { line-height: 1.9; font-size: 16px; color: #b0b0b0; margin-bottom: 25px; }
+
+        .transport-terminal-box {
+            background: #000; border: 1px solid var(--wiki-purple); 
+            padding: 40px; border-radius: 12px; margin: 40px 0; 
+            position: relative; clear: both;
+        }
+        #chaos-input {
+            width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--wiki-purple);
+            color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 26px; outline: none; padding: 10px 0;
+        }
+        #chaos-output { margin-top: 25px; font-family: 'JetBrains Mono', monospace; font-size: 48px; color: var(--wiki-purple); min-height: 60px; text-shadow: 0 0 15px var(--wiki-purple); }
+
+        #freedom-btn {
+            position: fixed; bottom: 30px; right: 30px;
+            padding: 15px 25px; background: linear-gradient(45deg, var(--wiki-blue), var(--wiki-purple));
+            color: #fff; font-weight: bold; border-radius: 50px; border: none; cursor: pointer;
+            box-shadow: 0 0 20px rgba(0,210,255,0.4); z-index: 2000; transition: 0.3s;
+        }
+        #freedom-btn:hover { transform: scale(1.1); box-shadow: 0 0 30px var(--wiki-blue); }
+
+        .quote-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center;
+            z-index: 3000; padding: 40px;
+        }
+        .quote-box { text-align: center; max-width: 800px; }
+        .quote-text { font-size: 36px; font-style: italic; color: var(--wiki-blue); margin-bottom: 20px; line-height: 1.4; }
+        .quote-close { color: var(--text-dim); cursor: pointer; font-size: 14px; text-decoration: underline; }
+
+        .wiki-btn { display: block; background: var(--wiki-blue); color: #000; text-align: center; padding: 16px; text-decoration: none; font-weight: bold; margin-top: 20px; border-radius: 4px; transition: 0.3s; }
+
+        @media (max-width: 900px) {
+
+    :root {
+        --sidebar-width: 0px;
+    }
+
+    body {
+        flex-direction: column;
+    }
+
+    .status-header {
+        left: 0;
+        padding: 0 15px;
+        height: 45px;
+        font-size: 10px;
+        gap: 10px;
+    }
+
+    .paper-ship {
+        width: 20px;
+        height: 20px;
+    }
+
+    #mw-panel {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .wiki-logo-container {
+        margin-bottom: 20px;
+    }
+
+    #content {
+        padding: 70px 20px 100px 20px;
+        max-width: 100%;
+    }
+
+    h1#firstHeading {
+        font-size: 28px;
+    }
+
+    p {
+        font-size: 15px;
+        line-height: 1.7;
+    }
+
+    .infobox-wiki {
+        float: none;
+        width: 100%;
+        margin: 20px 0;
+    }
+
+    #hacker-window {
+        display: none;
+    }
+
+    .transport-terminal-box {
+        padding: 20px;
+    }
+
+    #chaos-input {
+        font-size: 18px;
+    }
+
+    #chaos-output {
+        font-size: 24px;
+    }
+
+    #freedom-btn {
+        bottom: 15px;
+        right: 15px;
+        padding: 12px 18px;
+        font-size: 12px;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+    </style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<header class="status-header">
+
+    <div class="status-item"><span class="status-dot"></span> ONLINE M-CHAT</div>
+    <div class="header-badge badge-blue">E2EE</div>
+    <div class="header-badge badge-purple">CHAOS PROTOCOL</div>
+</header>
+
+<div id="mw-panel">
+    <div class="wiki-logo-container">
+        <span class="wiki-logo-main">M-CHAT</span>
+    </div>
+    
+    <div class="portal-group">
+        <h3>Документация</h3>
+        <ul>
+            <li><a href="#author">От автора</a></li>
+            <li><a href="#protocol">Шифрование</a></li>
+            <li><a href="#logo">Логотип приложения</a></li>
+            <li><a href="#name">Название приложения</a></li>
+            <li><a href="#philosophy">Философия</a></li>
+            <li><a href="#donate">Донат</a></li>
+            <li><a href="#telegram">Telegram канал</a></li>
+        </ul>
+    </div>
+</div>
+
+<div id="content">
+    <h1 id="firstHeading">M-Chat</h1>
+    <div class="tagline">Привет! как дела?</div>
+
+    <div id="hacker-window"><div id="matrix-code-lines"></div></div>
+
+    <div class="infobox-wiki">
+        <div class="infobox-wiki-header">M-Chat (Message Transporting)</div>
+        <div class="infobox-wiki-img">[ M-INFO ]</div>
+        <table>
+            <tr><th>Тип</th><td>Мессенджер</td></tr>
+            <tr><th>Автор</th><td>Маруф</td></tr>
+            <tr><th>Система</th><td>Linux</td></tr>
+            <tr><th>Шифрование</th><td>E2EE Chaos Protocol</td></tr>
+            <tr><th>Статус</th><td style="color:var(--wiki-green)">ONLINE</td></tr>
+        </table>
+        <a href="#donate" class="wiki-btn">Поддержать проект</a>
+    </div>
+
+    <section id="author">
+        <h2>От автора</h2>
+        <p><b>M-Chat:</b> Новое пространство для общения.
+В данный момент проект находится на стадии разработки и реализация технических стандартов Chaos Protocol.
+Проект стартовал в 2025 году как инженерная инициатива по созданию удобной среды для обмена информацией. Я разрабатываю архитектуру, где во главе стоят стабильность соединения и современные методы защиты пользовательских данных.
+Chaos Protocol — это E2EE шифрование которое делает из просто общения, целый хаос для безопасности ваших данных и создается из рандомных символов, где 1 буква может быть целой библиотекой хаоса.
+M-Chat создается как универсальная платформа: здесь можно будет вести личные переписки, объединяться в тематические группы и развивать каналы. Моя цель — предоставить инструмент для комфортного взаимодействия, где каждый может быть уверен в надежности используемых технологий. Выбирай, доверяешь ли ты нашему кораблику, который безопасно доставит твое сообщение через океан цифрового хаоса? </p> <img src="https://sun9-41.userapi.com/s/v1/ig2/v-E0kRDJdosJo97KUbB87YIBW_c-W-oQ9arJKGp8o8MGIyWy2dAtTycQvxdWKe9-PfUyTS9E_lt7vBWqj9ryyJ8q.jpg?quality=95&as=32x48,48x71,72x107,108x160,160x238,240x357,360x535,480x713,540x802,640x951,720x1070,1080x1605&from=bu&cs=1080x0" width="200">
+
+
+    <section id="protocol">
+        <h2>Шифрование (Chaos Protocol)</h2>
+        <p>Сердце системы — авторский протокол <b>Chaos (Е2ЕЕ)</b>. В отличие от стандартного сквозного шифрования, где сообщения передаются в структурированном виде, Chaos превращает данные в рандомные символы. Эти символы полностью превращаются в цифровой шум, что делает их хаосом в базе данных.</p>
+        
+        <div class="transport-terminal-box">
+            <div style="font-family: monospace; font-size: 10px; color: var(--wiki-purple); margin-bottom: 10px;">[ TRANSPORT_DEMO_CORE ]</div>
+            <input type="text" id="chaos-input" placeholder="Введите фразу..." maxlength="30">
+            <div id="chaos-output">_</div>
+        </div>
+    </section>
+
+    <section id="logo">
+        <h2>Логотип приложения</h2>
+        <p>Логотип M-Chat в виде <b>бумажного кораблика</b> был выбран не случайно. Он символизирует свободу плавания в безбрежном и зачастую опасном океане информации. Бумажный кораблик хрупок на первый взгляд, но он — единственный, кто способен маневрировать между гигантскими волнами корпоративного контроля, оставаясь незаметным и свободным. Бумажный кораблик — это самая простая вещь, которую человек может сделать своими руками. В мире M-chaT это символ того, что ваша безопасность — в ваших руках. Мы даем вам прочный лист бумаги и верный курс, но саму защиту своего пространства создаете вы сами.</p><img src="https://sun9-21.userapi.com/s/v1/ig2/H9CZaGeCPtSJdPtvJl2tkrwwzsM0mGFy6u7kFCvtFYwy7RhAGLndjhJ9oRGHi6Xma_6l8eHxhqXWWmXftRdGh3Si.jpg?quality=95&as=32x30,48x44,72x67,108x100,160x148,240x222,360x333,480x444,540x500,640x592,720x666,981x908&from=bu&cs=981x0" width="200"
+    
+    </section>
+
+    <section id="name">
+        <h2>Название приложения</h2>
+        <p><b>M-chaT:</b> Наше название — это не просто слово, это технический манифест из трех элементов:
+M (Message): Ваше сообщение — это ценный груз. Мы не «владеем» им и не открываем контейнер. Для нас это неприкосновенная посылка.
+cha (Chaos): Наша уникальная броня. Мы упаковываем ваш груз в хаос.
+T (Transporting): Наша главная задача. Мы выступаем надежным транспортом, который доставляет запечатанный пакет данных из точки А в точку Б по самому безопасному маршруту.
+M-chaT — мы строим защищенный путь для ваших мыслей.</p>
+    </section>
+
+    <section id="philosophy">
+        <h2>Философия</h2>
+        <p>M-Chat — это территория цифрового суверенитета. Мы строим наше пространство на фундаменте цифрового стоицизма и абсолютной свободы слова. В мире, где каждый ваш клик становится товаром, мы возвращаем главное: ваши данные принадлежат только вам. Ваши мысли, файлы и диалоги — это ваша частная собственность, ключ от которой есть только у вас. Мы не боимся сложности. Порядок в M-Chat рождается из управляемого хаоса. Как в живой природе нет прямых и предсказуемых линий, так и архитектура нашей сети неуловима для алгоритмов слежки и цензуры. Этот «цифровой иммунитет» делает систему живой и защищенной, превращая хаос в ваш щит. M-Chat — это место, где вы можете быть собой. Без масок, без фильтров и без надзора. Мы создали технологию, которая не управляет вами, а служит вашей свободе.</p>
+    </section>
+
+    <section id="donate">
+        <h2>Донат</h2>
+        <p>Проект M-Chat является полностью некоммерческим. Он развивается на чистом энтузиазме автора. Пожертвования помогают оплачивать серверa и покупать оборудование для тестирования протокола в экстремальных условиях. Любая поддержка ускоряет приближение релиза мобильной версии.</p>
+        <a href="https://www.donationalerts.com/r/mchat" class="btn-donate" style="display:inline-block; padding: 15px 30px; background: var(--wiki-blue); color: #000; text-decoration: none; font-weight: bold; border-radius: 5px;">Поддержать автора</a>
+    </section>
+
+    <section id="telegram">
+    <h2>Telegram канал</h2>
+    <p>Присоединяйтесь к нашему сообществу в Telegram. Там публикуются отчеты о разработке.</p>
+
+    <a href="https://t.me/Mchatofficial" target="_blank" class="wiki-btn" style="width:250px;">
+        Перейти в Telegram
+    </a>
+</section>
+</div>
+
+<script>
+
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const mDrops = Array(Math.floor(canvas.width/20)).fill(1);
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(5, 5, 5, 0.15)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "#003344"; ctx.font = "14px monospace";
+        mDrops.forEach((y, i) => {
+            ctx.fillText(Math.random() > 0.5 ? "0" : "1", i*20, y*20);
+            if(y*20 > canvas.height && Math.random() > 0.98) mDrops[i] = 0;
+            mDrops[i]++;
+        });
+    }
+    setInterval(drawMatrix, 50);
+
+    const terminalLines = document.getElementById('matrix-code-lines');
+    const chars = "010011011000110101110110";
+    const eggs = ["M-chaT", "MARUF", "CHAOS",];
+    function updateTerminal() {
+        let line = "";
+        if (Math.random() > 0.9) {
+            line = eggs[Math.floor(Math.random()*eggs.length)].padEnd(16, " ");
+        } else {
+            for(let i=0; i<16; i++) line += chars[Math.floor(Math.random()*chars.length)];
+        }
+        const div = document.createElement('div');
+        div.innerText = line;
+        terminalLines.appendChild(div);
+        if(terminalLines.childNodes.length > 22) terminalLines.removeChild(terminalLines.firstChild);
+    }
+    setInterval(updateTerminal, 150);
+
+    const inp = document.getElementById('chaos-input');
+    const out = document.getElementById('chaos-output');
+    const symbols = "🔣∆§ψΩ*/4M≈Ω§ΣλμΔ∇⚙️⚡$q3*!%&8";
+    inp.addEventListener('input', (e) => {
+        let v = e.target.value;
+        if(!v) { out.innerText = "_"; return; }
+        let res = "";
+        for(let i=0; i<v.length; i++) res += symbols[Math.floor(Math.random()*symbols.length)];
+        out.innerText = res;
+    });
+
+    window.onscroll = function() {
+        const term = document.getElementById('hacker-window');
+        if (window.scrollY > 600) term.style.opacity = "0";
+        else term.style.opacity = "1";
+    };
+
+</script>
+</body>
+<footer>
+© 2026 M-chaT. Сервис в тестировании и нейтральный.
+</footer>
+</html>
