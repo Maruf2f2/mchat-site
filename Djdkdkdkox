@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-CHAT INFO | Message Transporting</title>
+    <style>
+        :root {
+            --sidebar-width: 240px;
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #06070a;
+            --bg-content: #0b0d12;
+            --bg-sidebar: #080a0e;
+            --bg-card: #10131a;
+            --bg-card-hover: #141820;
+            --wiki-blue: #38bdf8;
+            --wiki-purple: #a78bfa;
+            --wiki-green: #34d399;
+            --wiki-accent: #f472b6;
+            --border: rgba(255,255,255,0.07);
+            --border-strong: rgba(255,255,255,0.12);
+            --text-main: #cbd5e1;
+            --text-bright: #f1f5f9;
+            --text-dim: #475569;
+            --text-muted: #334155;
+            --infobox-bg: #0f1117;
+            --terminal-bg: #060810;
+            --shadow: 0 4px 24px rgba(0,0,0,0.5);
+            --glow-blue: rgba(56, 189, 248, 0.15);
+            --glow-purple: rgba(167, 139, 250, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg-main: #f0f4f8;
+            --bg-content: #ffffff;
+            --bg-sidebar: #f8fafc;
+            --bg-card: #f1f5f9;
+            --bg-card-hover: #e8eef5;
+            --wiki-blue: #0284c7;
+            --wiki-purple: #7c3aed;
+            --wiki-green: #059669;
+            --wiki-accent: #db2777;
+            --border: rgba(0,0,0,0.08);
+            --border-strong: rgba(0,0,0,0.15);
+            --text-main: #334155;
+            --text-bright: #0f172a;
+            --text-dim: #94a3b8;
+            --text-muted: #cbd5e1;
+            --infobox-bg: #f8fafc;
+            --terminal-bg: #0f172a;
+            --shadow: 0 4px 24px rgba(0,0,0,0.1);
+            --glow-blue: rgba(2, 132, 199, 0.08);
+            --glow-purple: rgba(124, 58, 237, 0.08);
+        }
+
+        * { box-sizing: border-box; scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Syne', sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        /* MATRIX CANVAS */
+        #matrix {
+            position: fixed; top: 0; left: 0; z-index: 0;
+            opacity: 0.04; pointer-events: none;
+            transition: opacity 0.4s;
+        }
+        [data-theme="light"] #matrix { opacity: 0.02; }
+
+        /* ─── HEADER ─── */
+        .status-header {
+            position: fixed; top: 0;
+            left: var(--sidebar-width); right: 0;
+            height: 56px;
+            background: var(--bg-content);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            padding: 0 32px; z-index: 1000;
+            backdrop-filter: blur(20px);
+            gap: 16px;
+            transition: background 0.4s, border 0.4s, left 0.3s;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 16px; flex: 1; }
+
+        .status-item {
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 2px;
+            display: flex; align-items: center; gap: 8px;
+            color: var(--text-dim);
+        }
+        .status-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--wiki-green);
+            box-shadow: 0 0 8px var(--wiki-green);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+
+        .header-badge {
+            font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+            padding: 4px 10px; border-radius: 100px;
+            text-transform: uppercase;
+        }
+        .badge-blue {
+            background: rgba(56,189,248,0.1);
+            color: var(--wiki-blue);
+            border: 1px solid rgba(56,189,248,0.25);
+        }
+        .badge-purple {
+            background: rgba(167,139,250,0.1);
+            color: var(--wiki-purple);
+            border: 1px solid rgba(167,139,250,0.25);
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            margin-left: auto;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .theme-btn {
+            width: 52px; height: 28px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-strong);
+            border-radius: 100px; cursor: pointer;
+            position: relative; transition: all 0.3s;
+            outline: none;
+        }
+        .theme-btn::after {
+            content: '';
+            position: absolute; top: 3px; left: 3px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--wiki-blue);
+            box-shadow: 0 0 8px var(--wiki-blue);
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        [data-theme="light"] .theme-btn::after {
+            transform: translateX(24px);
+            background: var(--wiki-purple);
+            box-shadow: 0 0 8px var(--wiki-purple);
+        }
+        .theme-icon { font-size: 14px; }
+
+        /* ─── SIDEBAR ─── */
+        #mw-panel {
+            width: var(--sidebar-width);
+            padding: 24px 16px;
+            position: fixed; top: 0; left: 0;
+            height: 100vh;
+            border-right: 1px solid var(--border);
+            background: var(--bg-sidebar);
+            overflow-y: auto; font-size: 13px;
+            z-index: 900;
+            transition: background 0.4s, border 0.4s, transform 0.3s;
+        }
+        #mw-panel::-webkit-scrollbar { width: 3px; }
+        #mw-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+        .wiki-logo-container {
+            text-align: center;
+            padding: 24px 0 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 28px;
+        }
+        .logo-mark {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--wiki-blue), var(--wiki-purple));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: 800; color: #fff;
+            margin: 0 auto 10px;
+            box-shadow: 0 0 20px var(--glow-blue);
+        }
+        .wiki-logo-main {
+            font-size: 18px; font-weight: 800;
+            color: var(--text-bright);
+            display: block; letter-spacing: 2px;
+        }
+        .wiki-logo-sub {
+            font-size: 9px; letter-spacing: 2px;
+            color: var(--text-dim); text-transform: uppercase;
+            margin-top: 2px; display: block;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .portal-group { margin-bottom: 24px; }
+        .portal-group h3 {
+            font-size: 9px; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 2px;
+            padding: 0 8px 8px;
+            margin-bottom: 4px; font-family: 'Space Mono', monospace;
+        }
+        .portal-group ul { list-style: none; padding: 0; margin: 0; }
+        .portal-group li { margin-bottom: 2px; }
+        .portal-group a {
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            transition: all 0.2s;
+        }
+        .portal-group a:hover {
+            background: var(--bg-card);
+            color: var(--wiki-blue);
+        }
+        .nav-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--border-strong); flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        .portal-group a:hover .nav-dot { background: var(--wiki-blue); }
+
+        /* ─── MAIN CONTENT ─── */
+        #content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            background: var(--bg-content);
+            padding: 88px 64px 120px 64px;
+            max-width: calc(100vw - var(--sidebar-width));
+            position: relative; z-index: 1;
+            transition: background 0.4s;
+        }
+
+        .page-hero {
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero-eyebrow {
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 3px; text-transform: uppercase;
+            color: var(--wiki-blue);
+            font-family: 'Space Mono', monospace;
+            margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .hero-eyebrow::before {
+            content: '';
+            width: 24px; height: 1px;
+            background: var(--wiki-blue);
+        }
+
+        h1#firstHeading {
+            font-size: 52px; font-weight: 800;
+            letter-spacing: -1px;
+            margin: 0 0 8px 0;
+            color: var(--text-bright);
+            line-height: 1.1;
+        }
+        h1#firstHeading span {
+            background: linear-gradient(135deg, var(--wiki-blue), var(--wiki-purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .tagline {
+            font-size: 12px; color: var(--text-dim);
+            font-family: 'Space Mono', monospace;
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 8px;
+        }
+        .tagline i { -webkit-text-fill-color: var(--text-dim); }
+
+        /* ─── HACKER TERMINAL ─── */
+        #hacker-window {
+            position: absolute; top: 88px; right: 64px;
+            width: 220px; height: 220px;
+            background: var(--terminal-bg);
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            padding: 14px;
+            font-family: 'Space Mono', monospace;
+            font-size: 9px; color: var(--wiki-green);
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(52,211,153,0.08), var(--shadow);
+            line-height: 1.3; z-index: 10;
+            transition: opacity 0.5s ease;
+        }
+        .terminal-header {
+            display: flex; align-items: center; gap: 5px;
+            margin-bottom: 8px; padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .t-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+        /* ─── INFOBOX ─── */
+        .infobox-wiki {
+            float: right; clear: right;
+            width: 300px;
+            background: var(--infobox-bg);
+            border: 1px solid var(--border-strong);
+            border-radius: 16px;
+            margin: 240px 0 32px 40px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .infobox-wiki-header {
+            background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(167,139,250,0.15));
+            border-bottom: 1px solid var(--border);
+            text-align: center; font-weight: 700;
+            padding: 16px; color: var(--text-bright);
+            font-size: 14px; letter-spacing: 0.5px;
+        }
+        .infobox-wiki-img {
+            display: flex; width: 100%; height: 120px;
+            background: linear-gradient(135deg, var(--bg-main), var(--bg-card));
+            align-items: center; justify-content: center;
+            color: var(--wiki-blue); font-weight: 900;
+            font-size: 28px; letter-spacing: 3px;
+            font-family: 'Space Mono', monospace;
+            border-bottom: 1px solid var(--border);
+        }
+        .infobox-wiki table { width: 100%; border-collapse: collapse; }
+        .infobox-wiki th {
+            text-align: left; padding: 10px 16px;
+            color: var(--text-dim); font-size: 11px;
+            font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1px; width: 45%;
+            border-bottom: 1px solid var(--border);
+        }
+        .infobox-wiki td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px; color: var(--text-main);
+        }
+        .infobox-wiki tr:last-child th,
+        .infobox-wiki tr:last-child td { border-bottom: none; }
+
+        /* ─── SECTION HEADINGS ─── */
+        h2 {
+            margin-top: 64px;
+            font-size: 26px; font-weight: 700;
+            color: var(--text-bright);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            clear: both;
+            display: flex; align-items: center; gap: 12px;
+        }
+        h2::before {
+            content: '';
+            width: 4px; height: 26px;
+            background: linear-gradient(180deg, var(--wiki-blue), var(--wiki-purple));
+            border-radius: 2px; flex-shrink: 0;
+        }
+
+        p {
+            line-height: 1.85; font-size: 15px;
+            color: var(--text-main);
+            margin-bottom: 20px;
+        }
+
+        /* ─── TRANSPORT TERMINAL BOX ─── */
+        .transport-terminal-box {
+            background: var(--terminal-bg);
+            border: 1px solid var(--border-strong);
+            padding: 32px 36px;
+            border-radius: 16px;
+            margin: 32px 0;
+            position: relative; clear: both;
+            box-shadow: 0 0 40px var(--glow-purple), var(--shadow);
+        }
+        .terminal-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px; color: var(--wiki-purple);
+            letter-spacing: 2px; margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+        #chaos-input {
+            width: 100%; background: transparent;
+            border: none; border-bottom: 2px solid var(--wiki-purple);
+            color: var(--text-bright);
+            font-family: 'Space Mono', monospace;
+            font-size: 22px; outline: none; padding: 10px 0;
+            transition: border-color 0.3s;
+        }
+        #chaos-input::placeholder { color: var(--text-muted); }
+        #chaos-input:focus { border-color: var(--wiki-blue); }
+        #chaos-output {
+            margin-top: 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 36px; color: var(--wiki-purple);
+            min-height: 50px;
+            text-shadow: 0 0 20px var(--wiki-purple);
+            word-break: break-all;
+        }
+
+        /* ─── IMAGES ─── */
+        .section-img {
+            display: block;
+            max-width: 200px;
+            border-radius: 12px;
+            border: 1px solid var(--border-strong);
+            margin: 16px 0;
+            box-shadow: var(--shadow);
+        }
+
+        /* ─── WIKI BUTTON ─── */
+        .wiki-btn {
+            display: block;
+            background: linear-gradient(135deg, var(--wiki-blue), var(--wiki-purple));
+            color: #fff; text-align: center;
+            padding: 14px; text-decoration: none;
+            font-weight: 700; font-size: 13px;
+            letter-spacing: 0.5px;
+            transition: all 0.3s; margin: 16px;
+            border-radius: 8px;
+        }
+        .wiki-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+        /* ─── DONATE BUTTON ─── */
+        .btn-donate {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--wiki-blue), var(--wiki-purple));
+            color: #fff; text-decoration: none;
+            font-weight: 700; font-size: 14px;
+            border-radius: 12px;
+            box-shadow: 0 0 24px var(--glow-blue);
+            transition: all 0.3s;
+        }
+        .btn-donate:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--glow-blue); }
+
+        /* ─── SOCIAL SECTION ─── */
+        .social-grid {
+            display: flex; gap: 16px; flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .social-card {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 600; font-size: 14px;
+            transition: all 0.3s;
+            min-width: 160px;
+        }
+        .social-card:hover {
+            border-color: var(--wiki-blue);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--glow-blue);
+            color: var(--text-bright);
+        }
+        .social-card.insta:hover {
+            border-color: var(--wiki-accent);
+            box-shadow: 0 8px 24px rgba(244,114,182,0.15);
+        }
+        .social-icon { font-size: 24px; }
+
+        /* ─── FOOTER ─── */
+        footer {
+            position: fixed; bottom: 0;
+            left: var(--sidebar-width); right: 0;
+            background: var(--bg-content);
+            border-top: 1px solid var(--border);
+            text-align: center; padding: 12px;
+            font-size: 11px; color: var(--text-dim);
+            font-family: 'Space Mono', monospace;
+            letter-spacing: 0.5px;
+            z-index: 500;
+            transition: background 0.4s, left 0.3s;
+        }
+
+        /* ─── STATUS DOT IN TABLE ─── */
+        .status-cell {
+            color: var(--wiki-green);
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600;
+        }
+        .status-cell::before {
+            content: '';
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--wiki-green);
+            box-shadow: 0 0 6px var(--wiki-green);
+            animation: pulse-dot 2s infinite;
+        }
+
+        /* ─── MOBILE ─── */
+        @media (max-width: 900px) {
+            :root { --sidebar-width: 0px; }
+            body { flex-direction: column; }
+
+            .status-header { left: 0; padding: 0 16px; height: 50px; }
+
+            #mw-panel {
+                width: 100%; height: auto;
+                position: relative; top: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 16px;
+            }
+
+            #content {
+                margin-left: 0;
+                padding: 70px 20px 90px 20px;
+                max-width: 100%;
+            }
+
+            h1#firstHeading { font-size: 32px; }
+            .infobox-wiki { float: none; width: 100%; margin: 20px 0; }
+            #hacker-window { display: none; }
+            .transport-terminal-box { padding: 20px; }
+            #chaos-input { font-size: 16px; }
+            #chaos-output { font-size: 22px; }
+            footer { left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<header class="status-header">
+    <div class="header-left">
+        <div class="status-item"><span class="status-dot"></span> ONLINE M-CHAT</div>
+        <div class="header-badge badge-blue">E2EE</div>
+        <div class="header-badge badge-purple">CHAOS PROTOCOL</div>
+    </div>
+    <div class="theme-toggle">
+        <span class="theme-icon">🌙</span>
+        <button class="theme-btn" id="themeToggle" aria-label="Переключить тему"></button>
+        <span class="theme-icon">☀️</span>
+    </div>
+</header>
+
+<div id="mw-panel">
+    <div class="wiki-logo-container">
+        <div class="logo-mark">M</div>
+        <span class="wiki-logo-main">M-CHAT</span>
+        <span class="wiki-logo-sub">Message Transporting</span>
+    </div>
+
+    <div class="portal-group">
+        <h3>Документация</h3>
+        <ul>
+            <li><a href="#author"><span class="nav-dot"></span>От автора</a></li>
+            <li><a href="#protocol"><span class="nav-dot"></span>Шифрование</a></li>
+            <li><a href="#logo"><span class="nav-dot"></span>Логотип приложения</a></li>
+            <li><a href="#name"><span class="nav-dot"></span>Название приложения</a></li>
+            <li><a href="#philosophy"><span class="nav-dot"></span>Философия</a></li>
+            <li><a href="#security"><span class="nav-dot"></span>Безопасность</a></li>
+            <li><a href="#donate"><span class="nav-dot"></span>Донат</a></li>
+            <li><a href="#icons"><span class="nav-dot"></span>Соцсети</a></li>
+        </ul>
+    </div>
+</div>
+
+<div id="content">
+    <div class="page-hero">
+        <div class="hero-eyebrow">Документация · v1.0</div>
+        <h1 id="firstHeading">M-<span>Chat</span></h1>
+        <div class="tagline">
+            <i class="fa-solid fa-users"></i>
+            &nbsp;23 подписчика
+        </div>
+    </div>
+
+    <div id="hacker-window">
+        <div class="terminal-header">
+            <div class="t-dot" style="background:#ff5f57"></div>
+            <div class="t-dot" style="background:#febc2e"></div>
+            <div class="t-dot" style="background:#28c840"></div>
+        </div>
+        <div id="matrix-code-lines"></div>
+    </div>
+
+    <div class="infobox-wiki">
+        <div class="infobox-wiki-header">M-Chat · Message Transporting</div>
+        <div class="infobox-wiki-img">[ M-INFO ]</div>
+        <table>
+            <tr><th>Тип</th><td>Мессенджер</td></tr>
+            <tr><th>Автор</th><td>Маруф</td></tr>
+            <tr><th>Система</th><td>Linux</td></tr>
+            <tr><th>Шифрование</th><td>E2EE Chaos Protocol</td></tr>
+            <tr><th>Статус</th><td><div class="status-cell">ONLINE</div></td></tr>
+        </table>
+        <a href="#donate" class="wiki-btn">Поддержать проект</a>
+    </div>
+
+    <section id="author">
+        <h2>От автора</h2>
+        <p><b>M-Chat:</b> Новое пространство для общения.
+В данный момент проект находится на стадии разработки и реализация технических стандартов Chaos Protocol.
+Проект стартовал в 2025 году как инженерная инициатива по созданию удобной среды для обмена информацией. Я разрабатываю архитектуру, где во главе стоят стабильность соединения и современные методы защиты пользовательских данных.
+Chaos Protocol — это E2EE шифрование которое делает из просто общения, целый хаос для безопасности ваших данных и создается из рандомных символов, где 1 буква может быть целой библиотекой хаоса.
+M-Chat создается как универсальная платформа: здесь можно будет вести личные переписки, объединяться в тематические группы и развивать каналы. Моя цель — предоставить инструмент для комфортного взаимодействия, где каждый может быть уверен в надежности используемых технологий. Выбирай, доверяешь ли ты нашему кораблику, который безопасно доставит твое сообщение через океан цифрового хаоса?</p>
+        <img class="section-img" src="https://sun9-41.userapi.com/s/v1/ig2/v-E0kRDJdosJo97KUbB87YIBW_c-W-oQ9arJKGp8o8MGIyWy2dAtTycQvxdWKe9-PfUyTS9E_lt7vBWqj9ryyJ8q.jpg?quality=95&as=32x48,48x71,72x107,108x160,160x238,240x357,360x535,480x713,540x802,640x951,720x1070,1080x1605&from=bu&cs=1080x0" alt="M-Chat">
+    </section>
+
+    <section id="protocol">
+        <h2>Шифрование (Chaos Protocol)</h2>
+        <p>Сердце системы — авторский протокол <b>Chaos (Е2ЕЕ)</b>. В отличие от стандартного сквозного шифрования, где сообщения передаются в структурированном виде, Chaos превращает данные в рандомные символы. Эти символы полностью превращаются в цифровой шум, что делает их хаосом в базе данных.</p>
+
+        <div class="transport-terminal-box">
+            <div class="terminal-label">[ TRANSPORT_DEMO_CORE ]</div>
+            <input type="text" id="chaos-input" placeholder="Введите фразу..." maxlength="30">
+            <div id="chaos-output">_</div>
+        </div>
+    </section>
+
+    <section id="logo">
+        <h2>Логотип приложения</h2>
+        <p>Логотип M-Chat в виде <b>бумажного кораблика</b> был выбран не случайно. Он символизирует свободу плавания в безбрежном и зачастую опасном океане информации. Бумажный кораблик хрупок на первый взгляд, но он — единственный, кто способен маневрировать между гигантскими волнами корпоративного контроля, оставаясь незаметным и свободным. Бумажный кораблик — это самая простая вещь, которую человек может сделать своими руками. В мире M-chaT это символ того, что ваша безопасность — в ваших руках. Мы даем вам прочный лист бумаги и верный курс, но саму защиту своего пространства создаете вы сами.</p>
+        <img class="section-img" src="https://sun9-21.userapi.com/s/v1/ig2/H9CZaGeCPtSJdPtvJl2tkrwwzsM0mGFy6u7kFCvtFYwy7RhAGLndjhJ9oRGHi6Xma_6l8eHxhqXWWmXftRdGh3Si.jpg?quality=95&as=32x30,48x44,72x67,108x100,160x148,240x222,360x333,480x444,540x500,640x592,720x666,981x908&from=bu&cs=981x0" alt="Логотип M-Chat">
+    </section>
+
+    <section id="name">
+        <h2>Название приложения</h2>
+        <p><b>M-chaT:</b> Наше название — это не просто слово, это технический манифест из трех элементов:
+<b>M (Message):</b> Ваше сообщение — это ценный груз. Мы не «владеем» им и не открываем контейнер. Для нас это неприкосновенная посылка.
+<b>cha (Chaos):</b> Наша уникальная броня. Мы упаковываем ваш груз в хаос.
+<b>T (Transporting):</b> Наша главная задача. Мы выступаем надежным транспортом, который доставляет запечатанный пакет данных из точки А в точку Б по самому безопасному маршруту.
+M-chaT — мы строим защищенный путь для ваших мыслей.</p>
+    </section>
+
+    <section id="philosophy">
+        <h2>Философия</h2>
+        <p>M-Chat — это территория цифрового суверенитета. Мы строим наше пространство на фундаменте цифрового стоицизма и абсолютной свободы слова. В мире, где каждый ваш клик становится товаром, мы возвращаем главное: ваши данные принадлежат только вам. Ваши мысли, файлы и диалоги — это ваша частная собственность, ключ от которой есть только у вас. Мы не боимся сложности. Порядок в M-Chat рождается из управляемого хаоса. Как в живой природе нет прямых и предсказуемых линий, так и архитектура нашей сети неуловима для алгоритмов слежки и цензуры. Этот «цифровой иммунитет» делает систему живой и защищенной, превращая хаос в ваш щит. M-Chat — это место, где вы можете быть собой. Без масок, без фильтров и без надзора. Мы создали технологию, которая не управляет вами, а служит вашей свободе.</p>
+    </section>
+
+    <section id="security">
+        <h2>Безопасность</h2>
+        <p>Почему M-chaT безопасен?<br>
+        <b>1.</b> Мы не требуем лишней личной информации. Мы собираем только то, что необходимо для работы приложения, а точнее (User, Email, Password.)<br>
+        <b>2.</b> Проект разрабатывается с учётом возможной нагрузки и защиты от внешних атак. Используются серверные технологии с встроенными механизмами безопасности.<br>
+        <b>3.</b> Безопасность — это не галочка, а процесс. M-Chat будет регулярно обновляться и улучшать защиту по мере развития проекта.</p>
+        <img class="section-img" src="https://sun9-77.userapi.com/s/v1/ig2/pvX73tdIrTdYloclhsL9sbXC7ODtFkewI0qP70yCYB9Kj9oklE8clP6Cwr8HusqJ1Ruh617VVU58pqCisz8MUnBJ.jpg?quality=95&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1024x1024&from=bu&cs=1024x0" alt="Безопасность M-Chat">
+    </section>
+
+    <section id="donate">
+        <h2>Донат</h2>
+        <p>Проект M-Chat является полностью некоммерческим. Он развивается на чистом энтузиазме автора. Пожертвования помогают оплачивать серверa и покупать оборудование для тестирования протокола в экстремальных условиях. Любая поддержка ускоряет приближение релиза мобильной версии.</p>
+        <a href="https://www.donationalerts.com/r/mchat" class="btn-donate" target="_blank" rel="noopener">
+            <i class="fa-solid fa-heart"></i> Поддержать автора
+        </a>
+    </section>
+
+    <section id="icons">
+        <h2>Мы в соцсетях</h2>
+        <div class="social-grid">
+            <a href="https://t.me/Mchatofficial" target="_blank" rel="noopener" class="social-card">
+                <span class="social-icon"><i class="fa-brands fa-telegram" style="color: #27a9ff;"></i></span>
+                Telegram
+            </a>
+            <a href="https://www.instagram.com/mchatofficialq?igsh=c3MyanI1d2F1OHNt" target="_blank" rel="noopener" class="social-card insta">
+                <span class="social-icon"><i class="fa-brands fa-instagram" style="color: #ab409d;"></i></span>
+                Instagram
+            </a>
+        </div>
+    </section>
+
+</div>
+
+<footer>
+    © 2026 M-chaT · Все права защищены · Мы не собираем данные
+</footer>
+
+<script>
+    // ─── MATRIX BACKGROUND ───
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    const mDrops = Array(Math.floor(canvas.width / 20)).fill(1);
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(6,7,10,0.15)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#004455"; ctx.font = "13px monospace";
+        mDrops.forEach((y, i) => {
+            ctx.fillText(Math.random() > 0.5 ? "0" : "1", i * 20, y * 20);
+            if (y * 20 > canvas.height && Math.random() > 0.98) mDrops[i] = 0;
+            mDrops[i]++;
+        });
+    }
+    setInterval(drawMatrix, 50);
+
+    // ─── TERMINAL LINES ───
+    const terminalLines = document.getElementById('matrix-code-lines');
+    const chars = "010011011000110101110110";
+    const eggs = ["M-chaT", "MARUF", "CHAOS", "29.05.26"];
+    function updateTerminal() {
+        let line = Math.random() > 0.9
+            ? eggs[Math.floor(Math.random() * eggs.length)].padEnd(18, " ")
+            : Array.from({length: 18}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const div = document.createElement('div');
+        div.innerText = line;
+        terminalLines.appendChild(div);
+        if (terminalLines.childNodes.length > 22) terminalLines.removeChild(terminalLines.firstChild);
+    }
+    setInterval(updateTerminal, 150);
+
+    // ─── CHAOS INPUT ───
+    const inp = document.getElementById('chaos-input');
+    const out = document.getElementById('chaos-output');
+    const symbols = "🔣∆§ψΩ*/4M≈Ω§ΣλμΔ∇⚙⚡$q3*!%&8#@^~";
+    inp.addEventListener('input', (e) => {
+        const v = e.target.value;
+        if (!v) { out.innerText = "_"; return; }
+        out.innerText = Array.from(v).map(() => symbols[Math.floor(Math.random() * symbols.length)]).join('');
+    });
+
+    // ─── SCROLL FADE TERMINAL ───
+    window.onscroll = () => {
+        const term = document.getElementById('hacker-window');
+        if (term) term.style.opacity = window.scrollY > 500 ? "0" : "1";
+    };
+
+    // ─── THEME TOGGLE ───
+    const html = document.documentElement;
+    const btn = document.getElementById('themeToggle');
+    const stored = localStorage.getItem('mchat-theme');
+    if (stored) html.setAttribute('data-theme', stored);
+
+    btn.addEventListener('click', () => {
+        const current = html.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('mchat-theme', next);
+    });
+</script>
+</body>
+</html>
